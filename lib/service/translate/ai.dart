@@ -6,9 +6,8 @@ import 'package:anx_reader/service/translate/index.dart';
 import 'package:anx_reader/widgets/ai_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:anx_reader/page/book_player/epub_player.dart';
-
+final epubPlayerKey = GlobalKey<EpubPlayerState>();
 class AiTranslateProvider extends TranslateServiceProvider {
-  final epubPlayerKey = GlobalKey<EpubPlayerState>();
   @override
   Widget translate(String text, LangListEnum from, LangListEnum to) {
      return convertStreamToWidget(translateStreamAI(text, from, to));

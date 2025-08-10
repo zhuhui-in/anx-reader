@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:anx_reader/page/book_player/epub_player.dart';
 import 'package:anx_reader/config/shared_preference_provider.dart';
 import 'package:anx_reader/enums/ai_prompts.dart';
 
@@ -31,6 +31,8 @@ String generatePromptSummaryThePreviousContent(String previousContent) {
 
 String generatePromptTranslate(String text, String toLocale, String fromLocale) {
   String prompt = Prefs().getAiPrompt(AiPrompts.translate);
+  final epubPlayerKey = GlobalKey<EpubPlayerState>();
+  final previousContent = epubPlayerKey.currentState!.previousContent(2000);  
   prompt = prompt.replaceAll('{{text}}', text.trim());
   prompt = prompt.replaceAll('{{to_locale}}', toLocale);
   prompt = prompt.replaceAll('{{from_locale}}', fromLocale);

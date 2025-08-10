@@ -10,18 +10,20 @@ import 'package:anx_reader/page/book_player/epub_player.dart';
 class AiTranslateProvider extends TranslateServiceProvider {
   @override
   Widget translate(String text, LangListEnum from, LangListEnum to) {
-  final epubPlayerKey = GlobalKey<EpubPlayerState>();
-  final previousContent = await epubPlayerKey.currentState!.previousContent(1000);
-    return AiStream(
-        prompt: generatePromptTranslate(
+     return convertStreamToWidget(translateStreamAI(text, from, to));
+  }
+
+  Stream<String> translateStreamAI(
+      String text, LangListEnum from, LangListEnum to) async* {
+    final epubPlayerKey = GlobalKey<EpubPlayerState>();
+    final previousContent = await epubPlayerKey.currentState!.previousContent(1000);
+    yield generatePromptTranslate(
           previousContent,
           text,
           to.nativeName,
           from.nativeName,
-        ),
-        regenerate: true);
-  }
-
+        );
+  }  
   @override
   List<ConfigItem> getConfigItems() {
     return [

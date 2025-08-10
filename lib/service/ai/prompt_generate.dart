@@ -30,10 +30,8 @@ String generatePromptSummaryThePreviousContent(String previousContent) {
   return prompt;
 }
 
-String generatePromptTranslate(String text, String toLocale, String fromLocale) {
+String generatePromptTranslate(String previousContent, String text, String toLocale, String fromLocale) {
   String prompt = Prefs().getAiPrompt(AiPrompts.translate);
-  final epubPlayerKey = GlobalKey<EpubPlayerState>();
-  String previousContent = Future.sync(() => epubPlayerKey.currentState!.previousContent(1000));
   prompt = prompt.replaceAll('{{text}}', text.trim());
   prompt = prompt.replaceAll('{{to_locale}}', toLocale);
   prompt = prompt.replaceAll('{{from_locale}}', fromLocale);

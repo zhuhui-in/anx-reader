@@ -9,8 +9,11 @@ import 'package:flutter/material.dart';
 class AiTranslateProvider extends TranslateServiceProvider {
   @override
   Widget translate(String text, LangListEnum from, LangListEnum to) {
+  final epubPlayerKey = GlobalKey<EpubPlayerState>();
+  final previousContent = await epubPlayerKey.currentState!.previousContent(1000);
     return AiStream(
         prompt: generatePromptTranslate(
+          previousContent,
           text,
           to.nativeName,
           from.nativeName,

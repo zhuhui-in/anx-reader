@@ -5,6 +5,7 @@ import 'package:anx_reader/service/ai/prompt_generate.dart';
 import 'package:anx_reader/service/translate/index.dart';
 import 'package:anx_reader/widgets/ai_stream.dart';
 import 'package:flutter/material.dart';
+import 'package:anx_reader/page/book_player/epub_player.dart';
 
 class AiTranslateProvider extends TranslateServiceProvider {
   @override

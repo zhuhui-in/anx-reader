@@ -8,14 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:anx_reader/page/book_player/epub_player.dart';
 
 class AiTranslateProvider extends TranslateServiceProvider {
+  final epubPlayerKey = GlobalKey<EpubPlayerState>();
   @override
   Widget translate(String text, LangListEnum from, LangListEnum to) {
      return convertStreamToWidget(translateStreamAI(text, from, to));
   }
 
   Stream<String> translateStreamAI(
-      String text, LangListEnum from, LangListEnum to) async* {
-    final epubPlayerKey = GlobalKey<EpubPlayerState>();
+      String text, LangListEnum from, LangListEnum to) async* {    
     final previousContent = await epubPlayerKey.currentState!.previousContent(1000);
     yield generatePromptTranslate(
           previousContent,

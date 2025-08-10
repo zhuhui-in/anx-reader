@@ -162,7 +162,7 @@ class _AISettingsState extends ConsumerState<AISettings> {
       {
         "identifier": AiPrompts.translate,
         "title": L10n.of(context).settings_ai_prompt_translate_and_dictionary,
-        "variables": ["text", "to_locale", "from_locale"],
+        "variables": ["text", "to_locale", "from_locale", "previous_content"],
       }
     ];
 

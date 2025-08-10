@@ -1,9 +1,7 @@
 name: Build & Release
 
 on:
-  push:
-    branches:
-      - develop    
+  push: 
     tags:
       - 'v*'
       - 'beta-*'

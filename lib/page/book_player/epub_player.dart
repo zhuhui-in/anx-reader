@@ -358,8 +358,13 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
      renderAnnotations()
     ''');
   }
-
-  void getThemeColor() {
+  Future<void> SelectionEnd(String cfi, String text, bool footnote, double x, double y, String dir) async {
+    String previous_content = 
+        await previousContent(1500);
+    String whole_content = previous_content + "e77fc408-a055-4157-82d0-c12c388aecc1" + text;
+    showContextMenu(context, x, y, dir, whole_content, cfi, null, footnote); 
+  }
+void getThemeColor() {
     if (Prefs().autoAdjustReadingTheme) {
       List<ReadTheme> themes = widget.initialThemes;
       final isDayMode =
@@ -427,7 +432,7 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
           double x = location['pos']['point']['x'];
           double y = location['pos']['point']['y'];
           String dir = location['pos']['dir'];
-          showContextMenu(context, x, y, dir, text, cfi, null, footnote);
+          SelectionEnd(cfi, text, footnote, x, y, dir);
         });
     controller.addJavaScriptHandler(
         handlerName: 'onAnnotationClick',

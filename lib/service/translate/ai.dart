@@ -20,7 +20,16 @@ class AiTranslateProvider extends TranslateServiceProvider {
         ),
         regenerate: true);
   }
-
+  Widget translateWithPreviousContent(String previousContent, String text, LangListEnum from, LangListEnum to) {
+    return AiStream(
+        prompt: generatePromptTranslate2(
+          previousContent,
+          text,
+          to.nativeName,
+          from.nativeName,
+        ),
+        regenerate: true);
+  }
   @override
   Stream<String> translateStream(String text, LangListEnum from, LangListEnum to) async* {
     try {

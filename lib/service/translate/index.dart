@@ -162,9 +162,15 @@ Widget translateText(String text, {TranslateService? service}) {
   service ??= Prefs().translateService;
   final from = Prefs().translateFrom;
   final to = Prefs().translateTo;
-
-  return TranslateFactory.getProvider(service).translate(text, from, to);
+  List<String> list_string = text.split("e77fc408-a055-4157-82d0-c12c388aecc1");
+  String previousContent = list_string[0];  
+  String translatedContent = list_string[1];
+  if (service != TranslateService.ai) { 
+    return TranslateFactory.getProvider(service).translate(translatedContent, from, to);
+  }
+    return AiTranslateProvider().translateWithPreviousContent(previousContent, translatedContent, from, to);
 }
+
 
 List<ConfigItem> getTranslateServiceConfigItems(TranslateService service) {
   return TranslateFactory.getProvider(service).getConfigItems();
@@ -179,7 +185,7 @@ void saveTranslateServiceConfig(
   return TranslateFactory.getProvider(service).saveConfig(config);
 }
 
-Future<String> translateTextOnly(String text, {TranslateService? service}) async {
+Future<String> r(String text, {TranslateService? service}) async {
   service ??= Prefs().translateService;
   final from = Prefs().translateFrom;
   final to = Prefs().translateTo;

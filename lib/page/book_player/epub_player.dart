@@ -311,7 +311,10 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
       await webViewController.evaluateJavascript(
         source: "previousContent($count)",
       );
-
+  Future<String> SelectionContext() async =>
+      await webViewController.evaluateJavascript(
+        source: "selectionContext()",
+      );
   void onClick(Map<String, dynamic> location) {
     readingPageKey.currentState?.resetAwakeTimer();
     if (contextMenuEntry != null) {
@@ -358,8 +361,13 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
      renderAnnotations()
     ''');
   }
-
-  void getThemeColor() {
+  Future<void> SelectionEnd(String cfi, String text, bool footnote, double x, double y, String dir) async {
+    String selection_context_content = 
+        await SelectionContext();
+    String whole_content = selection_context_content + "e77fc408-a055-4157-82d0-c12c388aecc1" + text;
+    showContextMenu(context, x, y, dir, whole_content, cfi, null, footnote); 
+  }
+void getThemeColor() {
     if (Prefs().autoAdjustReadingTheme) {
       List<ReadTheme> themes = widget.initialThemes;
       final isDayMode =
@@ -427,7 +435,7 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
           double x = location['pos']['point']['x'];
           double y = location['pos']['point']['y'];
           String dir = location['pos']['dir'];
-          showContextMenu(context, x, y, dir, text, cfi, null, footnote);
+          SelectionEnd(cfi, text, footnote, x, y, dir);
         });
     controller.addJavaScriptHandler(
         handlerName: 'onAnnotationClick',

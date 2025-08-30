@@ -838,7 +838,11 @@ class Reader {
     return text;
 
   }
-
+  getSelectionContext = () => {
+    let selectionRange = getSelection();
+    let text = selectionRange.commonAncestorContainer.textContent;
+    return text;
+  }
   getSelection = () => {
     const selection = this.#doc.getSelection();
     const range = getSelectionRange(selection);
@@ -1265,6 +1269,8 @@ window.renderAnnotations = (annotations) => reader.renderAnnotation(annotations)
 window.theChapterContent = () => reader.getChapterContent()
 
 window.previousContent = (count = 2000) => reader.getPreviousContent(count)
+
+window.selectionContext = () => reader.getSelectionContext()
 
 // window.convertChinese = (mode) => reader.convertChinese(mode)
 

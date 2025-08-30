@@ -10,11 +10,14 @@ void showContextMenu(
   double x,
   double y,
   String dir,
-  String annoContent,
+  String wholeAnnoContent,
   String annoCfi,
   int? annoId,
   bool footnote,
 ) {
+  List<String> list_string = wholeAnnoContent.split("e77fc408-a055-4157-82d0-c12c388aecc1");
+  String previousContent = list_string[0];  
+  String annoContent = list_string[1]; 
   final playerKey = epubPlayerKey.currentState!;
   double screenWidth = MediaQuery.of(context).size.width;
   double screenHeight = MediaQuery.of(context).size.height;
@@ -110,7 +113,7 @@ void showContextMenu(
                   Row(
                     children: [
                       TranslationMenu(
-                        content: annoContent,
+                        content: wholeAnnoContent,
                         decoration: decoration,
                       ),
                     ],

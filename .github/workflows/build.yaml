@@ -2,6 +2,8 @@ name: Build & Release
 
 on:
   push:
+    branches:
+      - ai_translate     
     tags:
       - 'v*'
       - 'beta-*'

@@ -36,3 +36,11 @@ String generatePromptTranslate(String text, String toLocale, String fromLocale) 
   prompt = prompt.replaceAll('{{from_locale}}', fromLocale);
   return prompt;
 }
+String generatePromptTranslate2(String previous_content, String text, String toLocale, String fromLocale) {
+  String prompt = Prefs().getAiPrompt(AiPrompts.translate);
+  prompt = prompt.replaceAll('{{previous_content}}', previous_content.trim());
+  prompt = prompt.replaceAll('{{text}}', text.trim());
+  prompt = prompt.replaceAll('{{to_locale}}', toLocale);
+  prompt = prompt.replaceAll('{{from_locale}}', fromLocale);
+  return prompt;
+}

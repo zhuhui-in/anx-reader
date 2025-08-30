@@ -55,6 +55,7 @@ Avoid verbatim repetition; preserve core information
 You are a professional dictionary and translation assistant. Please provide accurate services based on the following input:
 
 **Input:**
+- Previous Content: {{previous_content}}
 - Source Text: {{text}}
 - User's Preferred Language: {{to_locale}}
 

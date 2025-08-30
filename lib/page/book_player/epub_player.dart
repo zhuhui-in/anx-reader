@@ -311,7 +311,10 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
       await webViewController.evaluateJavascript(
         source: "previousContent($count)",
       );
-
+  Future<String> SelectionContext() async =>
+      await webViewController.evaluateJavascript(
+        source: "selectionContext()",
+      );
   void onClick(Map<String, dynamic> location) {
     readingPageKey.currentState?.resetAwakeTimer();
     if (contextMenuEntry != null) {
@@ -359,9 +362,9 @@ class EpubPlayerState extends ConsumerState<EpubPlayer>
     ''');
   }
   Future<void> SelectionEnd(String cfi, String text, bool footnote, double x, double y, String dir) async {
-    String previous_content = 
-        await previousContent(1500);
-    String whole_content = previous_content + "e77fc408-a055-4157-82d0-c12c388aecc1" + text;
+    String selection_context_content = 
+        await SelectionContext();
+    String whole_content = selection_context_content + "e77fc408-a055-4157-82d0-c12c388aecc1" + text;
     showContextMenu(context, x, y, dir, whole_content, cfi, null, footnote); 
   }
 void getThemeColor() {

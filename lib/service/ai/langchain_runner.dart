@@ -13,80 +13,104 @@ class CancelableLangchainRunner {
     _subscription = null;
   }
 
-  Stream<String> stream({
-    required BaseChatModel model,
-    required PromptValue prompt,
-  }) {
-    String thinkBuffer = '';
-    String answerBuffer = '';
-    bool reasoningDetected = false;
-    bool answerPhaseStarted = false;
+ Stream<String> stream({
+  required BaseChatModel model,
+  required PromptValue prompt,
+}) {
+  String thinkBuffer = '';
+  String answerBuffer = '';
+  bool reasoningDetected = false;
+  bool answerPhaseStarted = false;
 
-    late StreamController<String> controller;
-    controller = StreamController<String>(
-      onListen: () {
-        final source = model.stream(prompt);
-        _subscription = source.listen(
-          (event) {
-            final rawChunk = event.output.content;
-            if (rawChunk.isEmpty) {
-              return;
+  late StreamController<String> controller;
+  controller = StreamController<String>(
+    onListen: () {
+      final source = model.stream(prompt);
+      _subscription = source.listen(
+        (event) {
+          // ... existing event handling code ...
+          final rawChunk = event.output.content;
+          if (rawChunk.isEmpty) {
+            return;
+          }
+
+          if (_isThinkChunk(rawChunk)) {
+            reasoningDetected = true;
+            final cleaned = _cleanThinkChunk(rawChunk);
+            if (cleaned.isNotEmpty) {
+              thinkBuffer += cleaned;
             }
-
-            if (_isThinkChunk(rawChunk)) {
-              reasoningDetected = true;
-              final cleaned = _cleanThinkChunk(rawChunk);
-              if (cleaned.isNotEmpty) {
-                thinkBuffer += cleaned;
-              }
-            } else {
-              if (reasoningDetected && !answerPhaseStarted) {
-                if (rawChunk.trim().isEmpty) {
-                  thinkBuffer += rawChunk;
-                } else {
-                  answerPhaseStarted = true;
-                  answerBuffer += rawChunk;
-                }
+          } else {
+            if (reasoningDetected && !answerPhaseStarted) {
+              if (rawChunk.trim().isEmpty) {
+                thinkBuffer += rawChunk;
               } else {
+                answerPhaseStarted = true;
                 answerBuffer += rawChunk;
               }
+            } else {
+              answerBuffer += rawChunk;
             }
+          }
 
-            final aggregated = reasoningDetected
-                ? '<think>${thinkBuffer.trim()}</think>\n$answerBuffer'
-                : answerBuffer;
+          final aggregated = reasoningDetected
+              ? '`<think>`${thinkBuffer.trim()}`</think>`\n$answerBuffer'
+              : answerBuffer;
 
-            if (!controller.isClosed) {
-              controller.add(aggregated);
+          if (!controller.isClosed) {
+            controller.add(aggregated);
+          }
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          if (!controller.isClosed) {
+            controller.addError(error, stackTrace);
+          }
+        },
+        onDone: () {
+          // Don't make onDone async - handle cleanup synchronously or use unawaited
+          _subscription = null;
+          Future.microtask(() async {
+            try {
+              await _closeModel(model);
+            } catch (_) {
+              // Ignore close errors
             }
-          },
-          onError: (Object error, StackTrace stackTrace) {
-            if (!controller.isClosed) {
-              controller.addError(error, stackTrace);
-            }
-          },
-          onDone: () async {
-            await _closeModel(model);
             if (!controller.isClosed) {
               await controller.close();
             }
-            _subscription = null;
-          },
-          cancelOnError: false,
-        );
-      },
-      onCancel: () async {
-        await _subscription?.cancel();
-        _subscription = null;
-        await _closeModel(model);
-        if (!controller.isClosed) {
-          await controller.close();
+          });
+        },
+        cancelOnError: false,
+      );
+    },
+    onCancel: () {
+      // Don't make onCancel async - handle cleanup with Future
+      final subscription = _subscription;
+      _subscription = null;
+      Future.microtask(() async {
+        try {
+          await subscription?.cancel();
+        } catch (_) {
+          // Ignore cancel errors
         }
-      },
-    );
+        try {
+          await _closeModel(model);
+        } catch (_) {
+          // Ignore close errors
+        }
+        if (!controller.isClosed) {
+          try {
+            await controller.close();
+          } catch (_) {
+            // Ignore close errors
+          }
+        }
+      });
+    },
+  );
 
-    return controller.stream;
-  }
+  return controller.stream;
+}
 
   Stream<String> streamAgent({
     required BaseChatModel model,

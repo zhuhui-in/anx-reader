@@ -54,7 +54,7 @@ class CancelableLangchainRunner {
             }
 
             final aggregated = reasoningDetected
-                ? '`<think>`${thinkBuffer.trim()}`</think>`\n$answerBuffer'
+                ? '<think>${thinkBuffer.trim()}</think>\n$answerBuffer'
                 : answerBuffer;
 
             if (!controller.isClosed) {

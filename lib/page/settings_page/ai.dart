@@ -170,7 +170,7 @@ class _AISettingsState extends ConsumerState<AISettings> {
                               prompt: generatePromptTest(),
                               identifier: services[currentIndex]["identifier"],
                               config: services[currentIndex]["config"],
-                              regenerate: true)),
+                              regenerate: false)),
                     );
                   },
                   child: Text(L10n.of(context).commonTest)),

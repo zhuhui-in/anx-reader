@@ -22,10 +22,98 @@ class TranslationMenu extends StatefulWidget {
   State<TranslationMenu> createState() => _TranslationMenuState();
 }
 
+// Static cache that persists across state recreations
+class _TranslationMenuCache {
+  static final Map<String, _CacheEntry> _cache = {};
+
+  static String _generateKey(String content, String? contextText) {
+    return '${content.hashCode}_${contextText?.hashCode ?? 0}';
+  }
+
+  static Widget getOrCreate(
+    String content,
+    String? contextText,
+    TranslateService service,
+    LangListEnum from,
+    LangListEnum to,
+  ) {
+    final key = _generateKey(content, contextText);
+    final entry = _cache[key];
+
+    // Check if cache entry exists and parameters match
+    if (entry != null &&
+        entry.service == service &&
+        entry.from == from &&
+        entry.to == to) {
+      return entry.widget;
+    }
+
+    // Create new widget and cache it
+    final widget = translateText(
+      content,
+      contextText: contextText,
+      service: service,
+    );
+    _cache[key] = _CacheEntry(
+      widget: widget,
+      service: service,
+      from: from,
+      to: to,
+    );
+    return widget;
+  }
+
+  static void clear() {
+    _cache.clear();
+  }
+}
+
+class _CacheEntry {
+  _CacheEntry({
+    required this.widget,
+    required this.service,
+    required this.from,
+    required this.to,
+  });
+
+  final Widget widget;
+  final TranslateService service;
+  final LangListEnum from;
+  final LangListEnum to;
+}
+
 class _TranslationMenuState extends State<TranslationMenu> {
+  Widget? _cachedTranslateWidget;
+
   @override
   void initState() {
     super.initState();
+    _updateTranslateWidgetIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(TranslationMenu oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.content != widget.content ||
+        oldWidget.contextText != widget.contextText) {
+      _updateTranslateWidgetIfNeeded();
+    }
+  }
+
+  void _updateTranslateWidgetIfNeeded() {
+    final effectiveContextText =
+        (widget.contextText?.trim().isEmpty ?? true) ? null : widget.contextText;
+    final service = Prefs().translateService;
+    final from = Prefs().translateFrom;
+    final to = Prefs().translateTo;
+
+    _cachedTranslateWidget = _TranslationMenuCache.getOrCreate(
+      widget.content,
+      effectiveContextText,
+      service,
+      from,
+      to,
+    );
   }
 
   @override
@@ -55,6 +143,11 @@ class _TranslationMenuState extends State<TranslationMenu> {
                   } else {
                     Prefs().translateTo = lang;
                   }
+                  // Clear cache and rebuild to get new translation with updated language
+                  _TranslationMenuCache.clear();
+                  setState(() {
+                    _updateTranslateWidgetIfNeeded();
+                  });
                 },
                 child: Text(lang.getNative(context)),
               ),
@@ -83,9 +176,8 @@ class _TranslationMenuState extends State<TranslationMenu> {
   @override
   Widget build(BuildContext context) {
     // print('Building TranslationMenu');
-    final effectiveContextText = (widget.contextText?.trim().isEmpty ?? true)
-        ? null
-        : widget.contextText;
+    // Update cache if translation settings changed
+    _updateTranslateWidgetIfNeeded();
     return Expanded(
       child: AnimatedSize(
         duration: const Duration(milliseconds: 300),
@@ -112,10 +204,7 @@ class _TranslationMenuState extends State<TranslationMenu> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    translateText(
-                      widget.content,
-                      contextText: effectiveContextText,
-                    ),
+                     _cachedTranslateWidget!,
                     const Divider(),
                     AxisFlex(
                       mainAxisSize: MainAxisSize.min,

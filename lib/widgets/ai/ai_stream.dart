@@ -57,10 +57,11 @@ class _AiStreamCache {
     final key = _generateKey(prompt, identifier, config, useAgent);
     final cachedStream = _cache[key];
     if (cachedStream != null) {
+      // Cached stream is already a broadcast stream, so it can be listened to multiple times
       return cachedStream;
     }
 
-    // Create new stream and cache it
+    // Create new stream and cache it as broadcast stream
     final messages = prompt.buildMessages();
     final stream = aiGenerateStream(
       messages,
@@ -71,8 +72,10 @@ class _AiStreamCache {
       ref: ref,
     );
 
-    _cache[key] = stream;
-    return stream;
+    // Convert to broadcast stream before caching so it can be reused
+    final broadcastStream = stream.asBroadcastStream();
+    _cache[key] = broadcastStream;
+    return broadcastStream;
   }
 
 }

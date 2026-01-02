@@ -65,6 +65,22 @@ class CancelableLangchainRunner {
             if (!controller.isClosed) {
               controller.addError(error, stackTrace);
             }
+            // Perform cleanup after error
+              _subscription = null;
+              Future.microtask(() async {
+                try {
+                  await _closeModel(model);
+                } catch (_) {
+                  // Ignore close errors
+                }
+                if (!controller.isClosed) {
+                  try {
+                    await controller.close();
+                  } catch (_) {
+                    // Ignore close errors
+                  }
+                }
+              });            
           },
           onDone: () {
             // Don't make onDone async - handle cleanup synchronously or use unawaited

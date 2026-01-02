@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:anx_reader/l10n/generated/L10n.dart';
 import 'package:anx_reader/service/ai/index.dart';
 import 'package:anx_reader/service/ai/prompt_generate.dart';
@@ -12,6 +14,71 @@ import 'package:anx_reader/widgets/ai/tool_step_tile.dart';
 import 'package:anx_reader/widgets/ai/tool_tiles/mindmap_step_tile.dart';
 import 'package:anx_reader/widgets/ai/tool_tiles/organize_bookshelf_step_tile.dart';
 import 'package:anx_reader/widgets/ai/tool_tiles/apply_book_tags_step_tile.dart';
+
+// Static cache for streams that persists across state recreations
+class _AiStreamCache {
+  static final Map<String, Stream<String>> _cache = {};
+
+  static String _generateKey(
+    PromptTemplatePayload prompt,
+    String? identifier,
+    Map<String, String>? config,
+    bool useAgent,
+  ) {
+    // Create a unique key based on prompt variables and other parameters
+    // Note: regenerate is NOT included in the key because regenerate=true should always create a new stream
+    final variablesJson = jsonEncode(prompt.variables);
+    final configJson = config != null ? jsonEncode(config) : 'null';
+    return '${prompt.identifier.name}_${variablesJson}_${identifier ?? 'null'}_$configJson\_$useAgent';
+  }
+
+  static Stream<String> getOrCreate(
+    PromptTemplatePayload prompt,
+    String? identifier,
+    Map<String, String>? config,
+    bool regenerate,
+    bool useAgent,
+    WidgetRef ref,
+  ) {
+    // When regenerating, always create a new stream (don't use cache)
+    if (regenerate) {
+      final messages = prompt.buildMessages();
+      return aiGenerateStream(
+        messages,
+        identifier: identifier,
+        config: config,
+        regenerate: regenerate,
+        useAgent: useAgent,
+        ref: ref,
+      );
+    }
+
+    // Check cache for non-regenerate requests
+    final key = _generateKey(prompt, identifier, config, useAgent);
+    final cachedStream = _cache[key];
+    if (cachedStream != null) {
+      // Cached stream is already a broadcast stream, so it can be listened to multiple times
+      return cachedStream;
+    }
+
+    // Create new stream and cache it as broadcast stream
+    final messages = prompt.buildMessages();
+    final stream = aiGenerateStream(
+      messages,
+      identifier: identifier,
+      config: config,
+      regenerate: regenerate,
+      useAgent: useAgent,
+      ref: ref,
+    );
+
+    // Convert to broadcast stream before caching so it can be reused
+    final broadcastStream = stream.asBroadcastStream();
+    _cache[key] = broadcastStream;
+    return broadcastStream;
+  }
+
+}
 
 class AiStream extends ConsumerStatefulWidget {
   const AiStream({
@@ -45,14 +112,13 @@ class AiStreamState extends ConsumerState<AiStream> {
   }
 
   Stream<String> _createStream(bool regenerate) {
-    final messages = widget.prompt.buildMessages();
-    return aiGenerateStream(
-      messages,
-      identifier: widget.identifier,
-      config: widget.config,
-      regenerate: regenerate,
-      useAgent: widget.useAgent,
-      ref: ref,
+    return _AiStreamCache.getOrCreate(
+      widget.prompt,
+      widget.identifier,
+      widget.config,
+      regenerate,
+      widget.useAgent,
+      ref,
     );
   }
 

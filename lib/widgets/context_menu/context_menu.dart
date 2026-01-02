@@ -272,6 +272,11 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay>
   late double _bottomInset;
   int? _noteId;
 
+  // Cache for TranslationMenu widget
+  Widget? _cachedTranslationMenu;
+  String? _cachedContent;
+  String? _cachedContextText;
+
   @override
   void initState() {
     super.initState();
@@ -443,6 +448,23 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay>
     _scheduleRecalculate();
   }
 
+  Widget _getTranslationMenu() {
+    // Only create new widget if content or contextText has changed
+    if (_cachedTranslationMenu == null ||
+        _cachedContent != widget.annoContent ||
+        _cachedContextText != widget.contextText) {
+      _cachedContent = widget.annoContent;
+      _cachedContextText = widget.contextText;
+      _cachedTranslationMenu = TranslationMenu(
+        content: widget.annoContent,
+        decoration: widget.decoration,
+        axis: widget.axis,
+        contextText: widget.contextText,
+      );
+    }
+    return _cachedTranslationMenu!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -513,12 +535,7 @@ class _ContextMenuOverlayState extends State<_ContextMenuOverlay>
                           AxisFlex(
                             axis: widget.axis,
                             children: [
-                              TranslationMenu(
-                                content: widget.annoContent,
-                                decoration: widget.decoration,
-                                axis: widget.axis,
-                                contextText: widget.contextText,
-                              ),
+                              _getTranslationMenu(),
                             ],
                           ),
                         ],

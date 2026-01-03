@@ -16,8 +16,19 @@ import 'package:anx_reader/widgets/ai/tool_tiles/organize_bookshelf_step_tile.da
 import 'package:anx_reader/widgets/ai/tool_tiles/apply_book_tags_step_tile.dart';
 
 // Static cache for streams that persists across state recreations
+class _CacheEntry {
+  final Stream<String> stream;
+  String? finalData;
+  bool isCompleted;
+
+  _CacheEntry({
+    required this.stream,
+  })  : finalData = null,
+        isCompleted = false;
+}
+
 class _AiStreamCache {
-  static final Map<String, Stream<String>> _cache = {};
+  static final Map<String, _CacheEntry> _cache = {};
 
   static String _generateKey(
     PromptTemplatePayload prompt,
@@ -55,10 +66,14 @@ class _AiStreamCache {
 
     // Check cache for non-regenerate requests
     final key = _generateKey(prompt, identifier, config, useAgent);
-    final cachedStream = _cache[key];
-    if (cachedStream != null) {
-      // Cached stream is already a broadcast stream, so it can be listened to multiple times
-      return cachedStream;
+    final cachedEntry = _cache[key];
+    if (cachedEntry != null) {
+      // If stream is completed and we have final data, return a completed stream with the cached data
+      if (cachedEntry.isCompleted && cachedEntry.finalData != null) {
+        return Stream.value(cachedEntry.finalData!);
+      }
+      // Otherwise, return the cached stream (still active)
+      return cachedEntry.stream;
     }
 
     // Create new stream and cache it as broadcast stream
@@ -74,7 +89,27 @@ class _AiStreamCache {
 
     // Convert to broadcast stream before caching so it can be reused
     final broadcastStream = stream.asBroadcastStream();
-    _cache[key] = broadcastStream;
+
+    // Create cache entry and set up listener to track final data
+    final entry = _CacheEntry(stream: broadcastStream);
+    _cache[key] = entry;
+
+    // Set up a listener to track the last emitted value and mark as completed
+    broadcastStream.listen(
+      (data) {
+        // Update final data on each emission (last one wins)
+        entry.finalData = data;
+      },
+      onDone: () {
+        // Mark as completed when stream finishes
+        entry.isCompleted = true;
+      },
+      onError: (_) {
+        // Don't cache error states - let them propagate
+      },
+      cancelOnError: false,
+    );
+
     return broadcastStream;
   }
 
